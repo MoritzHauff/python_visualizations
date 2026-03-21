@@ -19,6 +19,13 @@ def _():
 def _(mo):
     mo.md(r"""
     # Find postal code
+
+    Load data set from GeoJSON file, all postal codes in Germany are included.
+    The marimo table allows to select which postal codes should be shown on the map.
+
+    The used dataset was released under the following licence:
+
+    © European Union - GISCO, 2024, postal code point dataset, Licence CC-BY-SA 4.0.
     """)
     return
 
@@ -36,14 +43,31 @@ def _(gpd):
     return (postal_codes,)
 
 
-@app.cell
-def _(postal_codes):
-    postal_codes
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Select which postal codes should be shown
+    """)
     return
 
 
 @app.cell
-def _(folium, postal_codes):
+def _(mo, postal_codes):
+    ui_table = mo.ui.table(postal_codes)
+    ui_table
+    return (ui_table,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Map
+    """)
+    return
+
+
+@app.cell
+def _(folium, gpd, ui_table):
     def plot_postal_codes(postal_codes):
         # Center map on Germany
         m = folium.Map(location=[51.7, 10], zoom_start=5.5)
@@ -59,7 +83,7 @@ def _(folium, postal_codes):
 
         return m
 
-    map = plot_postal_codes(postal_codes)
+    map = plot_postal_codes(gpd.GeoDataFrame(ui_table.value))
     map
     return
 
