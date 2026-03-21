@@ -1,0 +1,4 @@
+# Ignore downloaded files
+*.zip
+postal_codes/
+

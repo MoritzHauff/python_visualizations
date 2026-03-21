@@ -17,3 +17,13 @@ https://molab.marimo.io/github/marimo-team/gallery-examples/blob/main/notebooks/
 - [ ] Upload data file
 - [ ] Connect to PW protected API which serves sensitive data files directly??
 
+## Data sources
+
+### Eurostat GISCO
+
+The official EU source, coverage and detail vary by country.
+
+https://ec.europa.eu/eurostat/web/gisco/geodata/administrative-units/postal-codes
+
+There use the Year 2024, `SHP` file format and EPSG: 4326 coordinate reference system.
+
