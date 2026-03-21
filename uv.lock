@@ -1390,6 +1390,7 @@ dependencies = [
     { name = "openlayers" },
     { name = "pandas" },
     { name = "plotly" },
+    { name = "requests" },
 ]
 
 [package.metadata]
@@ -1400,6 +1401,7 @@ requires-dist = [
     { name = "openlayers", specifier = ">=0.1.6" },
     { name = "pandas", specifier = ">=3.0.1" },
     { name = "plotly", specifier = ">=6.6.0" },
+    { name = "requests", specifier = ">=2.32.5" },
 ]
 
 [[package]]
