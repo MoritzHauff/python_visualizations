@@ -14,7 +14,23 @@ def _():
     import pandas as pd
     import geopandas as gpd
 
-    return glob, gpd, os, pd, requests, zipfile
+    return glob, gpd, mo, os, pd, requests, zipfile
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Prepare postal codes geodata
+
+    The code below downloads the [GISCO](https://ec.europa.eu/eurostat/web/gisco/geodata/administrative-units/postal-codes) postal code dataset,
+    extracts it, loads the shapefiles into a GeoDataFrame, filters for German postal codes, and saves the filtered data as a GeoJSON file.
+    The final GeoDataFrame is also displayed using Marimo's UI.
+
+    The dataset was released under the following licence:
+
+    © European Union - GISCO, 2024, postal code point dataset, Licence CC-BY-SA 4.0.
+    """)
+    return
 
 
 @app.cell
@@ -72,6 +88,40 @@ def _(EXTRACT_DIR, glob, gpd, pd):
 
     postal_codes = load_postal_codes(EXTRACT_DIR)
     print(postal_codes.head())
+    return (postal_codes,)
+
+
+@app.cell
+def _(gpd, postal_codes):
+    GEOJSON_PATH = "src/map_bubble/" + "postal_codes_de.geojson"
+
+    def filter_postal_codes(gdf: gpd.GeoDataFrame, country_id: str="DE"):
+        # Assuming the country code is stored in a column named 'CNTR_ID'
+        filtered_gdf = gdf[gdf["CNTR_ID"] == country_id]
+        # Only return relevant columns (e.g., postal code, city name and geometry)
+        filtered_gdf = filtered_gdf[["POSTCODE", "LAU_NAT", "geometry"]]
+        return filtered_gdf
+
+    postal_codes_filtered = filter_postal_codes(postal_codes, country_id="DE")
+    postal_codes_filtered.to_file(GEOJSON_PATH, driver="GeoJSON")
+    print("Filtered postal codes saved as GeoJSON.")
+    postal_codes_filtered
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Explore data further
+
+    Here you can use the Marimo Dataframe UI to explore the data set further.
+    """)
+    return
+
+
+@app.cell
+def _(mo, postal_codes):
+    mo.ui.dataframe(postal_codes)
     return
 
 
