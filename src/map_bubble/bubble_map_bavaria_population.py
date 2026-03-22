@@ -56,7 +56,7 @@ def _(gpd):
 
 
 @app.cell
-def _(df, go):
+def _(df, go, mo):
     def plot_bubble_map(df):
         limits = [(0,3),(3,11),(11,21),(21,50),(50,3000)]
         colors = ["royalblue","crimson","lightseagreen","orange","lightgrey"]
@@ -84,6 +84,7 @@ def _(df, go):
             ))
 
         # Automatic zoom
+        # https://plotly.com/python/map-configuration/
         fig.update_geos(fitbounds="locations")
     
         fig.update_layout(
@@ -98,7 +99,22 @@ def _(df, go):
 
         return fig
 
-    plot_bubble_map(df)
+    _fig = plot_bubble_map(df)
+
+    # https://plotly.com/javascript/configuration-options/
+    ui_fig = mo.ui.plotly(_fig, config={
+        # Always show the mode bar (the toolbar with options like zoom, pan, etc.)
+        "displayModeBar": True,
+        # Select pan modus by default
+        #"modeBarButtonsToAdd": ["pan2d"],
+    })
+    ui_fig
+    return (ui_fig,)
+
+
+@app.cell
+def _(ui_fig):
+    ui_fig.value
     return
 
 

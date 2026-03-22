@@ -10,6 +10,8 @@ https://molab.marimo.io/gallery
 
 https://molab.marimo.io/github/marimo-team/gallery-examples/blob/main/notebooks/geo/earthquake.py/wasm
 
+https://readmedium.com/work-with-geospatial-data-and-create-interactive-maps-using-geopy-and-plotly-28178d2868f1
+
 ## Goals
 
 - Extract coordinates from postal codes
