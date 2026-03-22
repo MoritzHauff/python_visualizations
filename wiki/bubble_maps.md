@@ -12,8 +12,8 @@ https://molab.marimo.io/github/marimo-team/gallery-examples/blob/main/notebooks/
 
 ## Goals
 
-- [ ] Extract coordinates from postal codes
-- [ ] Show circles on real map (OpenStreetMap)
+- Extract coordinates from postal codes
+- Show circles on real map (OpenStreetMap)
 - [ ] Upload data file
 - [ ] Connect to PW protected API which serves sensitive data files directly??
 
