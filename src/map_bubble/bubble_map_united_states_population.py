@@ -30,11 +30,10 @@ def _(mo):
 
 @app.cell
 def _(pd):
-
     df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/2014_us_cities.csv')
-    df.head()
 
     df['text'] = df['name'] + '<br>Population ' + (df['pop']/1e6).astype(str)+' million'
+    df.head()
     return (df,)
 
 
