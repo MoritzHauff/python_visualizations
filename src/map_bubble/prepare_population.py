@@ -108,7 +108,26 @@ def _(gpd):
         print(f"Loading file: {path}")
         return gpd.read_file(path)
 
+    def filter_postal_codes(df):
+        # Rename 'LAU_NAT' to 'NAME'
+        df_filtered = df.rename(columns={'LAU_NAT': 'Name'})
+
+        # Trim whitespace from the 'Name' column
+        df_filtered['Name'] = df_filtered['Name'].str.strip()
+
+        # Remove everything after the last comma in the 'Name' column
+        df_filtered['Name'] = df_filtered['Name'].str.replace(r',.*$', '', regex=True)
+
+        # Merge rows with the same 'Name' by keeping the first occurrence
+        #df_filtered = df_filtered.groupby('Name', as_index=False).first()
+
+        # Sort the DataFrame by 'Name' in ascending order
+        #df_filtered = df_filtered.sort_values(by='Name', ascending=True)
+
+        return df_filtered[['POSTCODE', 'Name', 'geometry']]
+
     postal_codes = load_postal_codes(PATH_GEOJSON)
+    postal_codes = filter_postal_codes(postal_codes)
     postal_codes
     return (postal_codes,)
 
@@ -117,23 +136,44 @@ def _(gpd):
 def _(df_cities, pd, postal_codes):
     def match_cities_with_geocoding(df_cities, postal_codes):
         # Merge the cities DataFrame with the postal codes GeoDataFrame on the 'Name' column
-        # The postal_codes 'LAU_NAT' must only contain the city's 'Name' and must not be equal.
-        for index, row in df_cities.iterrows():
-            city_name = row['Name']
-            postal_codes['Name'] = postal_codes['LAU_NAT'].apply(lambda lau_nat: city_name if city_name in lau_nat else None)
+        df_merged = pd.merge(df_cities, postal_codes, on='Name', how='left')
 
-        df_merged = pd.merge(df_cities, postal_codes, on='Name', how='inner')
-    
+        # Only use the first match for each city
+        df_merged = df_merged.groupby('Name', as_index=False).first()
 
-        # Select relevant columns and rename them
-        #df_merged = df_merged[['Identifier', 'Name', 'Population', 'geometry']]
-        #df_merged.rename(columns={'geometry': 'Coordinates'}, inplace=True)
+        # Sort the merged DataFrame by Population in descending order
+        df_merged = df_merged.sort_values(by='Population', ascending=False)
 
         return df_merged
 
     df_matched = match_cities_with_geocoding(df_cities, postal_codes)
     df_matched
 
+    return (df_matched,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Save city name, population and location to a new GeoJSON file
+    """)
+    return
+
+
+@app.cell
+def _(df_matched, gpd):
+    PATH_OUTPUT = "src/map_bubble/" + "population/cities_population.geojson"
+
+    def save_geojson(df, path: str):
+        # Only select the 'Name', 'Population', 'POSTCODE' and 'geometry' columns
+        df = df[['Name', 'Population', 'POSTCODE', 'geometry']]
+
+        df = gpd.GeoDataFrame(df, geometry='geometry')
+    
+        df.to_file(path, driver='GeoJSON', index=False)
+        print(f"Saved GeoJSON file to: {path}")
+
+    save_geojson(df_matched, PATH_OUTPUT)
     return
 
 
