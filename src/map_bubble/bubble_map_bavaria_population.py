@@ -50,19 +50,18 @@ def _(gpd):
         print(f"Loading file: {path}")
         return gpd.read_file(path)
 
+
     def convert_to_lat_lon(df: gpd.GeoDataFrame):
-        df['lon'] = df.geometry.x
-        df['lat'] = df.geometry.y
+        df["lon"] = df.geometry.x
+        df["lat"] = df.geometry.y
         return df
+
 
     df = load_postal_codes(PATH_DATA)
     df = convert_to_lat_lon(df)
 
-    df['text'] = (df['Name'] +
-                 '<br>Post code ' + (df['POSTCODE']) +
-                 '<br>Population ' + (df['Population']).astype(str)
-                 )
-    df['size'] = df['Population']
+    df["text"] = df["Name"] + "<br>Post code " + (df["POSTCODE"]) + "<br>Population " + (df["Population"]).astype(str)
+    df["size"] = df["Population"]
     df.head()
     return (df,)
 
@@ -70,8 +69,8 @@ def _(gpd):
 @app.cell
 def _(df, go, mo):
     def plot_bubble_map(df):
-        limits = [(0,3),(3,11),(11,21),(21,50),(50,3000)]
-        colors = ["royalblue","crimson","lightseagreen","orange","lightgrey"]
+        limits = [(0, 3), (3, 11), (11, 21), (21, 50), (50, 3000)]
+        colors = ["royalblue", "crimson", "lightseagreen", "orange", "lightgrey"]
         cities = []
         scale = 4000
 
@@ -79,47 +78,54 @@ def _(df, go, mo):
 
         for i in range(len(limits)):
             lim = limits[i]
-            df_sub = df[lim[0]:lim[1]]
-            fig.add_trace(go.Scattergeo(
-                locationmode = 'country names',
-                lon = df_sub['lon'],
-                lat = df_sub['lat'],
-                text = df_sub['text'],
-                marker = dict(
-                    size = df_sub['size']/scale,
-                    color = colors[i],
-                    line_color='rgb(40,40,40)',
-                    line_width=0.5,
-                    sizemode = 'area'
-                ),
-                name = '{0} - {1}'.format(lim[0],lim[1]),
-            ))
+            df_sub = df[lim[0] : lim[1]]
+            fig.add_trace(
+                go.Scattergeo(
+                    locationmode="country names",
+                    lon=df_sub["lon"],
+                    lat=df_sub["lat"],
+                    text=df_sub["text"],
+                    marker=dict(
+                        size=df_sub["size"] / scale,
+                        color=colors[i],
+                        line_color="rgb(40,40,40)",
+                        line_width=0.5,
+                        sizemode="area",
+                    ),
+                    name="{0} - {1}".format(lim[0], lim[1]),
+                )
+            )
 
         # Automatic zoom
         # https://plotly.com/python/map-configuration/
         fig.update_geos(fitbounds="locations")
-    
+
         fig.update_layout(
-            title_text = '2024 Bavaria city populations<br>(Click legend to toggle traces)',
-            showlegend = True,
-            geo = dict(
-                scope = 'europe',
-                landcolor = 'rgb(217, 217, 217)',
+            title_text="2024 Bavaria city populations<br>(Click legend to toggle traces)",
+            showlegend=True,
+            geo=dict(
+                scope="europe",
+                landcolor="rgb(217, 217, 217)",
             ),
-            height=400, margin={"r":0,"t":50,"l":0,"b":0},
+            height=400,
+            margin={"r": 0, "t": 50, "l": 0, "b": 0},
         )
 
         return fig
 
+
     _fig = plot_bubble_map(df)
 
     # https://plotly.com/javascript/configuration-options/
-    ui_fig = mo.ui.plotly(_fig, config={
-        # Always show the mode bar (the toolbar with options like zoom, pan, etc.)
-        "displayModeBar": True,
-        # Select pan modus by default
-        #"modeBarButtonsToAdd": ["pan2d"],
-    })
+    ui_fig = mo.ui.plotly(
+        _fig,
+        config={
+            # Always show the mode bar (the toolbar with options like zoom, pan, etc.)
+            "displayModeBar": True,
+            # Select pan modus by default
+            # "modeBarButtonsToAdd": ["pan2d"],
+        },
+    )
     ui_fig
     return (ui_fig,)
 
