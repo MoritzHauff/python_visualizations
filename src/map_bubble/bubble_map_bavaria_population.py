@@ -33,6 +33,18 @@ def _(mo):
 def _(gpd):
     PATH_DATA = "src/map_bubble/" + "population/cities_population.geojson"
 
+    # Fallback if data is not available offline
+    try:
+        f = open(PATH_DATA)
+        f.close()
+    except FileNotFoundError:
+        # import urllib.request
+        url = "https://raw.githubusercontent.com/MoritzHauff/python_visualizations/refs/heads/main/" + PATH_DATA
+        print(f"Data file not found at {PATH_DATA}. Trying to download it from GitHub...")
+        PATH_DATA = url
+        # urllib.request.urlretrieve(url, PATH_DATA)
+
+
     # Load data set from GeoJSON file
     def load_postal_codes(path: str):
         print(f"Loading file: {path}")
