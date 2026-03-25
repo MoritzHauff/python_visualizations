@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo>=0.21.1",
+#     "plotly>=6.6.0",
+# ]
+# ///
 import marimo
 
 __generated_with = "0.21.1"
