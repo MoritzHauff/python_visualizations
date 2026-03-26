@@ -5,6 +5,7 @@
 #     "plotly>=6.6.0",
 # ]
 # ///
+
 import marimo
 
 __generated_with = "0.21.1"
@@ -33,6 +34,12 @@ def _(mo):
 
     Reference on how to generate this type of plot: https://plotly.com/python/bubble-maps/
     """)
+    return
+
+
+@app.cell
+def _(PATH_DATA, mo):
+    mo.md(f"Loading data from: {PATH_DATA}")
     return
 
 
@@ -69,12 +76,13 @@ def _(gpd):
 
     df["text"] = df["Name"] + "<br>Post code " + (df["POSTCODE"]) + "<br>Population " + (df["Population"]).astype(str)
     df["size"] = df["Population"]
-    df.head()
-    return (df,)
+
+    df[["Name", "Population", "POSTCODE"]]
+    return PATH_DATA, df
 
 
 @app.cell
-def _(df, go, mo):
+def _(df, go):
     def plot_bubble_map(df):
         limits = [(0, 3), (3, 11), (11, 21), (21, 50), (50, 3000)]
         colors = ["royalblue", "crimson", "lightseagreen", "orange", "lightgrey"]
@@ -106,6 +114,9 @@ def _(df, go, mo):
         # Automatic zoom
         # https://plotly.com/python/map-configuration/
         fig.update_geos(fitbounds="locations")
+        # fig.update_geos(
+        #    center=dict(lon=10, lat=48),
+        # )
 
         fig.update_layout(
             title_text="2024 Bavaria city populations<br>(Click legend to toggle traces)",
@@ -114,7 +125,7 @@ def _(df, go, mo):
                 scope="europe",
                 landcolor="rgb(217, 217, 217)",
             ),
-            height=400,
+            height=550,
             margin={"r": 0, "t": 50, "l": 0, "b": 0},
         )
 
@@ -124,20 +135,21 @@ def _(df, go, mo):
     _fig = plot_bubble_map(df)
 
     # https://plotly.com/javascript/configuration-options/
-    ui_fig = mo.ui.plotly(
-        _fig,
-        config={
-            # Always show the mode bar (the toolbar with options like zoom, pan, etc.)
-            "displayModeBar": True,
-            # Select pan modus by default
-            # "modeBarButtonsToAdd": ["pan2d"],
-        },
-    )
-    ui_fig
-    return (ui_fig,)
+    # ui_fig = mo.ui.plotly(
+    #    _fig,
+    #    config={
+    #        # Always show the mode bar (the toolbar with options like zoom, pan, etc.)
+    #        "displayModeBar": True,
+    #        # Select pan modus by default
+    #        #"modeBarButtonsToAdd": ["pan2d"],
+    #    },
+    # )
+    # ui_fig
+    _fig
+    return
 
 
-@app.cell
+@app.cell(disabled=True)
 def _(ui_fig):
     ui_fig.value
     return
