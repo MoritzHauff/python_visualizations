@@ -5,13 +5,14 @@
 #     "plotly>=6.6.0",
 # ]
 # ///
+
 import marimo
 
 __generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     import marimo as mo
 
@@ -36,7 +37,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(gpd):
     PATH_DATA = "src/map_bubble/" + "population/cities_population.geojson"
 
@@ -73,7 +74,7 @@ def _(gpd):
     return (df,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(df, go, mo):
     def plot_bubble_map(df):
         limits = [(0, 3), (3, 11), (11, 21), (21, 50), (50, 3000)]
@@ -137,7 +138,7 @@ def _(df, go, mo):
     return (ui_fig,)
 
 
-@app.cell
+@app.cell(disabled=True)
 def _(ui_fig):
     ui_fig.value
     return
