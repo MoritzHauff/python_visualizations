@@ -1,0 +1,3 @@
+#!/bin/sh
+uv run marimo export html-wasm src/map_bubble/explore_nf_membership_clusters.py --sandbox -o docs --mode run --force --no-show-code
+

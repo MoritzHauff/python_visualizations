@@ -107,12 +107,13 @@ def _(pd):
 @app.cell
 def _():
     ui_text_password = mo.ui.text(label="Bitte Passwort eingeben:", placeholder="Passwort", kind="password")
-    return (ui_text_password,)
+    ui_button_login = mo.ui.button(label="Log in")  # button doesn't do anything but provides a different focus, so that the password input is processed 
+    return ui_button_login, ui_text_password
 
 
 @app.cell
-def _(ui_text_password):
-    ui_text_password
+def _(ui_button_login, ui_text_password):
+    mo.hstack([ui_text_password, ui_button_login])
     return
 
 
