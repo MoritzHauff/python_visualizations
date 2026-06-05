@@ -15,7 +15,10 @@ marimo export html-wasm notebook.py -o output_dir --mode edit
 ## Publish using GitHub Actions
 
 ### Multiple notebooks
-Either fork the marimo [template repository](https://github.com/marimo-team/marimo-gh-pages-template) for deploying multiple notebooks to Github Pages.
+
+> [!IMPORTANT]
+> TODO
+> Either fork the marimo [template repository](https://github.com/marimo-team/marimo-gh-pages-template) for deploying multiple notebooks to Github Pages.
 
 ### Single notebooks workflow
 Or add the following GitHub Actions workflow, which will republish your notebook on git push.

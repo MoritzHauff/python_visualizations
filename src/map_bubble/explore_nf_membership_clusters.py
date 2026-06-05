@@ -434,9 +434,11 @@ def _(fig):
     # HTML download with lazy loading
     async def get_html_data():
         _data = io.StringIO()
+        # https://plotly.com/python-api-reference/generated/plotly.io.write_html.html
         fig.write_html(_data, full_html=True)
         return _data.getvalue().encode("utf-8")
 
+    # https://docs.marimo.io/api/media/download/
     ui_download_html_lazy = mo.download(
         data=get_html_data,
         filename="plot_map_nf_membership_2025.html",
