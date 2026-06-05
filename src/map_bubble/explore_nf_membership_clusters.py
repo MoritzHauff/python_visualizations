@@ -26,6 +26,17 @@ def _():
     )
     fig = px.scatter_map(df, lat="lat", lon="long", size="cnt", zoom=3)
     fig.update_traces(cluster=dict(enabled=True))
+
+    #fig.update_layout(
+    #    map=dict(
+    #        style="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
+    #    )
+    #)
+
+    # update the map layout (underlying tile provider)
+    # https://plotly.com/python/tile-map-layers/
+    fig.update_layout(map_style="open-street-map")
+
     fig.show()
     return
 
