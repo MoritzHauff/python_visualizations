@@ -5,11 +5,13 @@ https://docs.marimo.io/guides/publishing/github/#publish-to-github-pages
 ## Export to WASM-powered HTML
 
 Export your notebook to a self-contained HTML file that runs using [WebAssembly](https://docs.marimo.io/guides/wasm/):
-
 ```sh
 marimo export html-wasm notebook.py -o output_dir --mode edit
 ```
-```
+
+or for read-only:
+```sh
+marimo export html-wasm notebook.py -o output_dir --mode run
 ```
 
 ## Publish using GitHub Actions
