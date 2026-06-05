@@ -1,0 +1,5 @@
+
+# raw data file must be protected
+*.csv
+*.json
+

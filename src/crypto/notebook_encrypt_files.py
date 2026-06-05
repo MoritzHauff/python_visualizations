@@ -70,18 +70,20 @@ def _():
         types = defaultdict(lambda: str, lat="float", lon="float", Postleitzahl="str")
         df_locations = pd.read_csv("src/map_bubble/nf_membership/Ortsgruppen_Adressen_manuell_bearbeitet.csv", sep=",", dtype=types)
 
+        data = {
+            "group_memberships": df_groups.to_dict(orient="records"),
+            "group_locations": df_locations.to_dict(orient="records")
+        }
 
-
-        return df_groups, df_locations
+        return data
 
     return (prepare_data,)
 
 
 @app.cell
 def _(prepare_data):
-    df1, df2 = prepare_data()
-    #mo.ui.dataframe(df2)
-    df2
+    dd = prepare_data()
+    dd
     return
 
 
