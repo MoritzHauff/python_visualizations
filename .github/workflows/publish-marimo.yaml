@@ -44,13 +44,14 @@ jobs:
 
       - name: 📝 Export marimo notebook
         run: |
-          # mkdir -p docs
-          uv run marimo export html-wasm src/map_bubble/explore_nf_membership_clusters.py -o docs --mode edit --no-show-code
+          mkdir -p site
+          uv run marimo export html-wasm src/map_bubble/explore_nf_membership_clusters.py --sandbox -o site --mode run --force --no-show-code
+          #uv run marimo export html-wasm src/map_bubble/explore_nf_membership_clusters.py -o site --mode edit --no-show-code
 
       - name: 📤 Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: site
 
   deploy:
     needs: build
