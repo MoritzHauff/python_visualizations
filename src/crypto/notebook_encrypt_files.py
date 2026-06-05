@@ -7,6 +7,7 @@ with app.setup:
     import json
     import logging
     import marimo as mo
+    from pathlib import Path
     from crypto.encryption import get_key, write_encrypted_json, read_encrypted_json
 
     #logging.basicConfig(level=logging.DEBUG)
@@ -26,27 +27,53 @@ with app.setup:
 
 @app.cell
 def _():
-    PASSWORD = "STRONG!Password"
-    key = get_key(PASSWORD, "src/crypto/test.salt")
-    key
-    return (key,)
+    ui_path_file = mo.ui.text(label="Enter the path to the encrypted file:", placeholder="src/crypto/example_data.enc")
+    ui_text_password = mo.ui.text(label="Enter the password:", placeholder="Your password", kind="password")
+    ui_run_button_save = mo.ui.run_button(label="Save Encrypted Data")
+    return ui_path_file, ui_run_button_save, ui_text_password
 
 
 @app.cell
-def _(key):
-    example_data = {"example": "This is some example data to encrypt."}
-
-    with open("src/crypto/example_data.json", "w") as f:
-        json.dump(example_data, f)
-
-    write_encrypted_json("src/crypto/example_data.enc", key, example_data)
+def _(ui_path_file, ui_run_button_save, ui_text_password):
+    mo.vstack([ui_path_file, ui_text_password, ui_run_button_save])
     return
 
 
 @app.cell
-def _(key):
-    data = read_encrypted_json("src/crypto/example_data.enc", key)
-    data
+def _(ui_path_file, ui_run_button_save, ui_text_password):
+    path = None
+    if ui_run_button_save.value:
+        path = Path(ui_path_file.value)
+        print(path)
+        if not path:
+            raise ValueError("Please enter a valid file path.")
+        password = ui_text_password.value
+        key = get_key(password, path.with_suffix(".salt"))
+
+        data = prepare_data()
+        write_encrypted_json(path.with_suffix(".enc"), key, data)
+
+        # Save data as plain text for debugging
+        with open(path.with_suffix(".json"), "w") as f:
+            json.dump(data, f)
+    return key, path
+
+
+@app.function
+def prepare_data():
+    example_data = {
+        "name": "Alice",
+        "age": 30,
+    }
+    return example_data
+
+
+@app.cell
+def _(key, path):
+    _data = None
+    if path:
+        _data = read_encrypted_json(path.with_suffix(".enc"), key)
+    _data
     return
 
 
