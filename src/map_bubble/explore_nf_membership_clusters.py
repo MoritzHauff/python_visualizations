@@ -85,6 +85,16 @@ def _():
     return
 
 
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Diese App soll das Erkunden von Naturfreunde Ortsgruppen in Bayern ermöglichen. Die Daten der Naturfreunde Bayern aus dem Jahr 2025 werden erst nach der Eingabe des Passworts entschlüsselt.
+
+    Bei Fragen, Fehlern oder Anregungen bitte ein Mail an moritz.hauff@naturfreundejugend.de schreiben.
+    """)
+    return
+
+
 @app.cell
 def _(pd):
     def get_data_air_traffic() -> pd.DataFrame:
@@ -286,6 +296,7 @@ def _():
 def _(
     COL_GROUP,
     COL_SIZE,
+    data_success,
     df,
     get_data_air_traffic,
     go,
@@ -350,14 +361,14 @@ def _(
 
 
     _df = get_data_air_traffic()
-    fig = plot_map(df)
+    fig = plot_map(df) if data_success else go.Figure()
     return (fig,)
 
 
 @app.cell
 def _():
     ui_label_map = mo.md("""
-    Diese Karte ist interaktiv. Mit der "Pan" Funktion oben rechts über der Karte, kann diese verschoben werden. Mithilfe von "Box Select" und "Lasso" können bestimmte Ortsgruppen ausgewählt werden, um diese genauer zu untersuchen.
+    Diese Karte ist interaktiv. Mit der "Pan" Funktion oben rechts über der Karte, kann diese verschoben werden. Mithilfe von "Box Select" und "Lasso" können bestimmte Ortsgruppen ausgewählt werden, um diese genauer zu untersuchen. Es können Bezirke in der Legende angeklickt werden, um die entsprechenden Ortsgruppen ein- oder auszublenden.
     """)
     return (ui_label_map,)
 
@@ -425,7 +436,9 @@ def _():
 
 
 @app.cell
-def _(COL_GROUP, COL_SIZE, df, pd, plot):
+def _(COL_GROUP, COL_SIZE, data_success, df, pd, plot):
+    mo.stop(not data_success)  # stop execution of the rest of the code if data access was not successful to avoid errors due to missing data)
+
     df_details = df
     # Get user selection if available
     selection = plot.value
