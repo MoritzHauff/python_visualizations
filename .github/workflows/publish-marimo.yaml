@@ -1,34 +1,72 @@
+# Workflow to publish a single marimo notebook
+name: Publish Marimo Notebook
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  # This workflow contains two jobs 'build' and 'deploy'
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
 
-        steps:
-            # ... checkout and install dependencies
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: 🛎️ Checkout repository
+        uses: actions/checkout@v4
 
-            - name: 📄 Export notebook
-              run: |
-                  marimo export html-wasm notebook.py -o path/to/output --mode run
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello from marimo publish workflow!
 
-            - name: 📦 Upload Pages Artifact
-              uses: actions/upload-pages-artifact@v3
-              with:
-                  path: path/to/output
+      # Runs a set of commands using the runners shell
+      - name: 🧰 Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    deploy:
-        needs: build
-        runs-on: ubuntu-latest
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
+      - name: 📦 Install dependencies
+        run: |
+          uv sync --all-extras --dev
 
-        permissions:
-            pages: write
-            id-token: write
+      - name: 📝 Export marimo notebook
+        run: |
+          # mkdir -p docs
+          uv run marimo export html-wasm src/map_bubble/explore_nf_membership_clusters.py -o docs --mode run
 
-        steps:
-            - name: 🌐 Deploy to GitHub Pages
-              id: deployment
-              uses: actions/deploy-pages@v4
-              with:
-                  artifact_name: github-pages
+      - name: 📤 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: 🌐 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
 
