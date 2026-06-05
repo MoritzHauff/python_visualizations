@@ -36,10 +36,13 @@ def _get_salt(path_salt: str | Path):
     return salt
 
 
-def get_key(password: str, path_salt: str | Path):
-    """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one."""
+def get_key(password: str, salt: str | Path | bytes):
+    """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one.
+    You can either provide the salt as bytes or a path to the salt file."""
 
-    salt = _get_salt(path_salt)
+    if not isinstance(salt, bytes):
+        # logger.debug("Need to convert salt path.")
+        salt = _get_salt(salt)
 
     kdf = Argon2id(
         salt=salt,
