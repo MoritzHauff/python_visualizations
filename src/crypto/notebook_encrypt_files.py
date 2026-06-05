@@ -40,7 +40,7 @@ def _(ui_path_file, ui_run_button_save, ui_text_password):
 
 
 @app.cell
-def _(ui_path_file, ui_run_button_save, ui_text_password):
+def _(prepare_data, ui_path_file, ui_run_button_save, ui_text_password):
     path = None
     if ui_run_button_save.value:
         path = Path(ui_path_file.value)
@@ -59,13 +59,30 @@ def _(ui_path_file, ui_run_button_save, ui_text_password):
     return key, path
 
 
-@app.function
-def prepare_data():
-    example_data = {
-        "name": "Alice",
-        "age": 30,
-    }
-    return example_data
+@app.cell
+def _():
+    import pandas as pd
+    from collections import defaultdict
+
+    def prepare_data():
+        df_groups = pd.read_csv("src/map_bubble/nf_membership/Gruppendaten_Auswertung_2025_BZs_Bayern.csv", sep=";")
+    
+        types = defaultdict(lambda: str, lat="float", lon="float", Postleitzahl="str")
+        df_locations = pd.read_csv("src/map_bubble/nf_membership/Ortsgruppen_Adressen_manuell_bearbeitet.csv", sep=",", dtype=types)
+
+
+
+        return df_groups, df_locations
+
+    return (prepare_data,)
+
+
+@app.cell
+def _(prepare_data):
+    df1, df2 = prepare_data()
+    #mo.ui.dataframe(df2)
+    df2
+    return
 
 
 @app.cell
