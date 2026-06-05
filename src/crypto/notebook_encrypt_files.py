@@ -7,7 +7,7 @@ with app.setup:
     import json
     import logging
     import marimo as mo
-    from crypto.encryption import get_key, write_encrypted, read_encrypted
+    from crypto.encryption import get_key, write_encrypted_json, read_encrypted_json
 
     #logging.basicConfig(level=logging.DEBUG)
     #import logging
@@ -39,14 +39,13 @@ def _(key):
     with open("src/crypto/example_data.json", "w") as f:
         json.dump(example_data, f)
 
-    write_encrypted("src/crypto/example_data.enc", key, json.dumps(example_data).encode())
+    write_encrypted_json("src/crypto/example_data.enc", key, example_data)
     return
 
 
 @app.cell
 def _(key):
-    _data = read_encrypted("src/crypto/example_data.enc", key)
-    data = json.loads(_data.decode())
+    data = read_encrypted_json("src/crypto/example_data.enc", key)
     data
     return
 

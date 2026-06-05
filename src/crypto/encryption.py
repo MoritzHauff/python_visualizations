@@ -5,6 +5,7 @@ reference: https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
 """
 
 import os
+import json
 import base64
 import logging
 from pathlib import Path
@@ -29,6 +30,7 @@ def _get_salt(path_salt: str | Path):
             f.write(salt)
     return salt
 
+
 def get_key(password: str, path_salt: str | Path):
     """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one."""
 
@@ -46,23 +48,35 @@ def get_key(password: str, path_salt: str | Path):
     return key
 
 
-def write_encrypted(path_file: str | Path, key, content) -> None:
-    """Write the content encrypted with key to disk."""
+def write_encrypted(path_file: str | Path, key, data) -> None:
+    """Write the data encrypted with key to disk."""
 
     fernet = Fernet(key)
-    token = fernet.encrypt(content)
+    token = fernet.encrypt(data)
     with open(path_file, "wb") as f:
         f.write(token)
 
+
 def read_encrypted(path_file: str | Path, key):
-    """Read and decrypt the content of an encrypted file."""
+    """Read and decrypt the data of an encrypted file."""
 
     fernet = Fernet(key)
     with open(path_file, "rb") as f:
         token = f.read()
-    content = fernet.decrypt(token)
-    return content
+    data = fernet.decrypt(token)
+    return data
 
+def write_encrypted_json(path_file: str | Path, key, data: dict) -> None:
+    """Write a JSON serializable object (dict) encrypted to disk."""
+    data_bytes = json.dumps(data).encode()
+    write_encrypted(path_file, key, data_bytes)
+
+
+def read_encrypted_json(path_file: str | Path, key) -> dict:
+    """Read and decrypt the data of an encrypted json file and return the corresponding dict."""
+    data_bytes = read_encrypted(path_file, key)
+    data = json.loads(data_bytes.decode())
+    return data
 
 # TODO add a context manager to use like this: with EncryptedFile.open(path, "r") as f: f.read()
 # TODO and use a IOBytestrem object
