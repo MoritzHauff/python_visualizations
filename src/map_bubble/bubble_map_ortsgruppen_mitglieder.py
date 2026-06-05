@@ -37,6 +37,22 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # TODOS
+
+    - [ ] load GeoJSON with locations and Mitgliederzahlen
+    - [ ] check if location is available if not print warning
+    - [ ] use loguru
+    - [ ] plot using the same plot
+    - [ ] plot based on Bezirk
+    - [ ] add tooltips to locations
+    - [ ] backup load GeoJSON from
+    """)
+    return
+
+
 @app.cell
 def _(PATH_DATA, mo):
     mo.md(f"""
