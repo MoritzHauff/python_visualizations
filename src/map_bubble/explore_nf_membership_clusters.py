@@ -49,7 +49,8 @@ def get_data_air_traffic() -> pd.DataFrame:
 @app.function
 @lru_cache(maxsize=None)
 def download_file(url: str) -> bytes:
-    """Downloads a file from the specified URL and provide it as IO buffer."""
+    """Downloads a file from the specified URL and provide it as bytes.
+    https://realpython.com/python-download-file-from-url/"""
     query_parameters = {}
     response = requests.get(url, params=query_parameters)
     if response.status_code != 200:
@@ -128,8 +129,11 @@ def _(prepare_data):
 
 
 @app.cell
-def _(df):
-    df
+def _(df, ui_settings_show_raw_df):
+    _show = None
+    if ui_settings_show_raw_df.value:
+        _show = df
+    _show
     return
 
 
@@ -143,7 +147,7 @@ def _(prepare_data):
 
 
 @app.cell
-def _(df):
+def _(df, ui_settings_map_height):
     def plot_map(df: pd.DataFrame) -> go.Figure:
         # https://plotly.com/python/tile-scatter-maps/
         # https://plotly.com/python-api-reference/generated/plotly.express.scatter_map.html
@@ -164,6 +168,9 @@ def _(df):
         # https://plotly.com/python/tile-map-layers/
         fig.update_layout(map_style="open-street-map")
 
+        # increase height of the figure
+        fig.update_layout(height=ui_settings_map_height.value)
+
         return fig
 
     _df = get_data_air_traffic()
@@ -173,7 +180,27 @@ def _(df):
 
 @app.cell
 def _(fig):
-    fig.show()
+    fig
+    return
+
+
+@app.cell
+def _():
+    # Settings UI elements
+    ui_settings_map_height = mo.ui.number(label="Höhe der Karte", value=700, start=300, stop=2000)
+    ui_settings_show_raw_df = mo.ui.checkbox(label="Rohdaten anzeigen", value=False)
+
+    ui_settings = mo.vstack([
+        ui_settings_map_height,
+        ui_settings_show_raw_df
+    ])
+
+    return ui_settings, ui_settings_map_height, ui_settings_show_raw_df
+
+
+@app.cell
+def _(ui_settings):
+    ui_settings
     return
 
 
