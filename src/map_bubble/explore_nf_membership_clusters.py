@@ -38,6 +38,27 @@ def _(ui_text_password):
     return
 
 
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Einstellungen und Filter
+    """)
+    return
+
+
+@app.cell
+def _(df, ui_settings, ui_settings_show_raw_df):
+    mo.accordion(
+        {
+            "Einstellungen": ui_settings,
+            "Rohdaten": df if ui_settings_show_raw_df.value else mo.md("Aktiviere \"Rohdaten\", in den Einstellungen."),
+            "Filter": mo.md("Hier kommen bald Filter dazu.")
+        },
+        multiple=True
+    )
+    return
+
+
 @app.function
 def get_data_air_traffic() -> pd.DataFrame:
     df = pd.read_csv(
@@ -88,7 +109,7 @@ def _():
 
 @app.cell
 def _(COL_GROUP, ui_text_password):
-    def prepare_data() -> tuple[bool, pd.DataFrame]:
+    def prepare_data_nf_membership() -> tuple[bool, pd.DataFrame]:
         try:
             data_dict = download_data(ui_text_password.value)
             df_locations = pd.DataFrame.from_records(data_dict["group_locations"])
@@ -119,35 +140,29 @@ def _(COL_GROUP, ui_text_password):
         df_combined[COL_GROUP] = df_combined[COL_GROUP].str.replace("LV Bayern", "Landesverband Bayern")   
         return True, df_combined
 
-    return (prepare_data,)
+    return (prepare_data_nf_membership,)
 
 
 @app.cell
-def _(prepare_data):
-    data_success, df = prepare_data()
+def _(prepare_data_nf_membership):
+    data_success, df = prepare_data_nf_membership()
     return (df,)
 
 
 @app.cell
-def _(df, ui_settings_show_raw_df):
-    _show = None
-    if ui_settings_show_raw_df.value:
-        _show = df
-    _show
+def _():
+    #df
     return
 
 
 @app.cell
-def _(prepare_data):
-    def get_data_nf_membership() -> pd.DataFrame:
-        data_success, df = prepare_data()
-        return df
-
-    return
-
-
-@app.cell
-def _(df, ui_settings_map_height):
+def _(
+    df,
+    ui_layout_checkbox_cluster,
+    ui_layout_color_column,
+    ui_layout_marker_size,
+    ui_settings_map_height,
+):
     def plot_map(df: pd.DataFrame) -> go.Figure:
         # https://plotly.com/python/tile-scatter-maps/
         # https://plotly.com/python-api-reference/generated/plotly.express.scatter_map.html
@@ -158,11 +173,13 @@ def _(df, ui_settings_map_height):
             lat="lat",  # latitude column
             lon="lon",  # longitude column
             size="Mitglieder.gesamt",  # column which determines the size of the markers
-            size_max=100,  # maximum mark size (defalt 20)
-            zoom=5.5,
+            size_max=ui_layout_marker_size.value,  # maximum mark size (defalt 20)
+            color=ui_layout_color_column.value,  # column which determines the color of the markers
+            zoom=6,
         )
         # enable clustering of points if they are close together
-        fig.update_traces(cluster=dict(enabled=True))
+        if ui_layout_checkbox_cluster.value:
+            fig.update_traces(cluster=dict(enabled=True))
 
         # update the map layout (underlying tile provider)
         # https://plotly.com/python/tile-map-layers/
@@ -179,9 +196,47 @@ def _(df, ui_settings_map_height):
 
 
 @app.cell
+def _(ui_layout):
+    ui_layout
+    return
+
+
+@app.cell
 def _(fig):
     fig
     return
+
+
+@app.cell
+def _():
+    # Layout UI elements
+    ui_layout_checkbox_cluster = mo.ui.checkbox(label="Gruppieren", value=True)
+
+    ui_layout_color_column = mo.ui.dropdown(
+        label="Farbkategorie", 
+        options=
+        {
+            "Einfarbig": None, 
+            "Bezirk": "Bezirk", 
+            "Altersdurchschnitt": "Altersdurchschnitt", 
+            "Frauenanteil": "Frauenanteil (Prozent)"
+        }, 
+        value="Bezirk"
+    )
+
+    ui_layout_marker_size = mo.ui.slider(start=10, stop=200, step=10, label="Kreisgröße", value=100)
+
+    ui_layout = mo.hstack([
+        ui_layout_checkbox_cluster,
+        ui_layout_color_column,
+        ui_layout_marker_size,
+    ])
+    return (
+        ui_layout,
+        ui_layout_checkbox_cluster,
+        ui_layout_color_column,
+        ui_layout_marker_size,
+    )
 
 
 @app.cell
