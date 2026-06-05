@@ -14,18 +14,21 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 
 
+logger = logging.getLogger(__name__)
+
+
 def _get_salt(path_salt: str | Path):
     """If available read the previous salt, otherwise generate a new one and save it."""
     if not isinstance(path_salt, Path):
         path_salt = Path(path_salt)
 
     if path_salt.is_file():
-        logging.debug(f"Reading salt from: {path_salt.absolute()}")
+        logger.debug(f"Reading salt from: {path_salt.absolute()}")
         with open(path_salt, "rb") as f:
             salt = f.read()
     else:
         salt = os.urandom(16)
-        logging.debug(f"Saving salt to: {path_salt.absolute()}")
+        logger.debug(f"Saving salt to: {path_salt.absolute()}")
         with open(path_salt, "wb") as f:
             f.write(salt)
     return salt
@@ -49,7 +52,23 @@ def get_key(password: str, path_salt: str | Path):
 
 
 def write_encrypted(path_file: str | Path, key, data) -> None:
-    """Write the data encrypted with key to disk."""
+    """Write the data encrypted with key to disk.
+
+    Every call to Fernet.encrypt() produces a different ciphertext, because Fernet includes:
+    - a random 128‑bit IV (for AES‑128 in CBC mode)
+    - a timestamp
+    - HMAC authentication tag
+    
+    So even if:
+    - the password is identical
+    - the salt file is reused
+    - the derived key is identical
+    - the JSON content is identical
+    …the encrypted output must differ.
+    
+    This is a security feature called semantic security.
+    """
+    logger.debug(f"Write encrypted file to: {path_file}")
 
     fernet = Fernet(key)
     token = fernet.encrypt(data)
@@ -59,6 +78,7 @@ def write_encrypted(path_file: str | Path, key, data) -> None:
 
 def read_encrypted(path_file: str | Path, key):
     """Read and decrypt the data of an encrypted file."""
+    logger.debug(f"Read encrypted file from: {path_file}")
 
     fernet = Fernet(key)
     with open(path_file, "rb") as f:
