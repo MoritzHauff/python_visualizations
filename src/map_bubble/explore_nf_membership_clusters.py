@@ -54,6 +54,7 @@ def download_file(url: str) -> bytes:
     response = requests.get(url, params=query_parameters)
     if response.status_code != 200:
         raise Exception(f"Failed to download file from {url}. Status code: {response.status_code}")
+    print(f"Successfully downloaded file from {url}. Size: {len(response.content)} bytes.")
     return response.content
 
 
@@ -128,20 +129,21 @@ def _(prepare_data):
 
 @app.cell
 def _(df):
-    mo.ui.dataframe(df)
+    df
     return
 
 
-@app.function
-def get_data_nf_membership() -> pd.DataFrame:
-    df = pd.read_csv(
-        "https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv"
-    )
-    return df
+@app.cell
+def _(prepare_data):
+    def get_data_nf_membership() -> pd.DataFrame:
+        data_success, df = prepare_data()
+        return df
+
+    return
 
 
 @app.cell
-def _():
+def _(df):
     def plot_map(df: pd.DataFrame) -> go.Figure:
         # https://plotly.com/python/tile-scatter-maps/
         # https://plotly.com/python-api-reference/generated/plotly.express.scatter_map.html
@@ -150,10 +152,10 @@ def _():
         fig = px.scatter_map(
             df,
             lat="lat",  # latitude column
-            lon="long",  # longitude column
-            size="cnt",  # size of the markers based on the 'cnt' column
+            lon="lon",  # longitude column
+            size="Mitglieder.gesamt",  # column which determines the size of the markers
             size_max=100,  # maximum mark size (defalt 20)
-            zoom=3,
+            zoom=5.5,
         )
         # enable clustering of points if they are close together
         fig.update_traces(cluster=dict(enabled=True))
@@ -165,7 +167,12 @@ def _():
         return fig
 
     _df = get_data_air_traffic()
-    fig = plot_map(_df)
+    fig = plot_map(df)
+    return (fig,)
+
+
+@app.cell
+def _(fig):
     fig.show()
     return
 
