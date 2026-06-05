@@ -57,13 +57,6 @@ def _():
     return
 
 
-@app.cell
-def _():
-    import plotly
-    mo.md(f"Plotly version: {plotly.__version__}")
-    return
-
-
 @app.function
 def get_data_air_traffic() -> pd.DataFrame:
     df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv")
@@ -300,6 +293,14 @@ def _(
         # update the map layout (underlying tile provider)
         # https://plotly.com/python/tile-map-layers/
         fig.update_layout(map_style="open-street-map")
+        #fig.update_layout(map_style="basic")
+        #fig.update_layout(map_style="carto-voyager")
+
+        #fig.update_layout(
+        #    map=dict(style="https://tile.openstreetmap.de/{z}/{x}/{y}.png")
+        #)
+
+        #fig.update_layout(map_style="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png")
 
         # Start in pan mode
         fig.update_layout(dragmode="pan")
@@ -496,6 +497,13 @@ async def _(get_html_data):
 @app.cell(disabled=True)
 def _(ui_download_html_lazy):
     ui_download_html_lazy
+    return
+
+
+@app.cell
+def _():
+    import plotly
+    mo.md(f"Plotly version: {plotly.__version__}")
     return
 
 
