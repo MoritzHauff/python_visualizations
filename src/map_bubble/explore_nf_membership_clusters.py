@@ -4,8 +4,8 @@ __generated_with = "0.21.1"
 app = marimo.App(width="medium")
 
 with app.setup:
+    import io
     import json
-    import locale
     import requests
     import marimo as mo
     import pandas as pd
@@ -16,9 +16,6 @@ with app.setup:
     from cryptography.fernet import InvalidToken
 
     from crypto.encryption import get_key, Fernet
-
-    # Set the locale to German
-    locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")
 
 
 @app.cell(hide_code=True)
@@ -204,23 +201,11 @@ def _(
     get_age_updated()  # COL_SIZE should be updated each time one checkbox is updated.
     COL_SIZE = determine_col_size()
     df = df_raw
+
+    # if all age groups are selected, we can use the total membership column, otherwise we need to sum up the selected age groups to get the total membership for the selected age groups.
     if COL_SIZE == "Mitglieder.summiert":
         enabled_age_groups = [f"Mitglieder Alter.{age_group}" for age_group in age_groups if ui_checkoboxes_age_groups[age_group].value]
         df[COL_SIZE] = df[enabled_age_groups].sum(axis=1)
-        #    [
-        #        "Mitglieder Alter.0-8",
-        #        "Mitglieder Alter.9-14",
-        #        "Mitglieder Alter.15-18",
-        #        "Mitglieder Alter.19-26",
-        #        "Mitglieder Alter.27-45",
-        #        "Mitglieder Alter.46-57",
-        #        "Mitglieder Alter.58-64",
-        #        "Mitglieder Alter.65-75",
-        #        "Mitglieder Alter.>75",
-        #    ]
-        #].sum(axis=1)
-
-    df
     return COL_SIZE, df
 
 
@@ -268,6 +253,7 @@ def _(
             custom_data=[COL_GROUP],  # column to include in the click event data
             # labels={"Mitglieder.gesamt": "Mitglieder"},  # rename column for legend
             zoom=6,  # initial zoom level
+            title="Mitgliederzahlen der Naturfreunde Ortsgruppen in Bayern (2025)",  # set title
         )
         # enable clustering of points if they are close together
         if ui_layout_checkbox_cluster.value:
@@ -276,6 +262,9 @@ def _(
         # update the map layout (underlying tile provider)
         # https://plotly.com/python/tile-map-layers/
         fig.update_layout(map_style="open-street-map")
+
+        # Start in pan mode
+        fig.update_layout(dragmode="pan")
 
         # increase height of the figure
         fig.update_layout(height=ui_settings_map_height.value)
@@ -308,7 +297,29 @@ def _(fig, ui_settings_always_show_mode_bar):
     _plotly_options = {}
     if ui_settings_always_show_mode_bar.value:
         # https://plotly.com/python/configuration-options/
+        # always show the mode bar (the toolbar above the plot with the buttons for zooming, saving, etc.)
         _plotly_options["displayModeBar"] = True
+
+    # add a custom button to the mode bar to download the plot as an HTML file
+    #_plotly_options["modeBarButtonsToAdd"] = [
+    #         {
+    #             "name": "Download HTML",
+    #             "icon": "download",
+    #             "click": """
+    #                 function(gd) {
+    #                     const html = Plotly.toHTML(gd.data, gd.layout);
+    #                     const blob = new Blob([html], {type: 'text/html'});
+    #                     const a = document.createElement('a');
+    #                     a.href = URL.createObjectURL(blob);
+    #                     a.download = 'map_plot_nf_membership_2025.html';
+    #                     a.click();
+    #                 }
+    #             """
+    #         }
+    #     ]
+    # 
+
+    #_plotly_options["modeBarButtonsToAdd"] = ["sendDataToCloud"]
 
     plot = mo.ui.plotly(fig, config=_plotly_options)
     plot
@@ -403,6 +414,59 @@ def _():
         ui_settings_map_height,
         ui_settings_show_raw_df,
     )
+
+
+@app.cell
+def _(fig):
+    # HTML download with lazy loading
+    #async def get_html_data():
+    def get_html_data():
+        #await asyncio.sleep(1)
+        #return "<p>Test</p>"
+        _data = io.StringIO()
+        #_data = io.BytesIO()
+        fig.write_html(_data, full_html=True)
+        #return _data
+    
+        return _data.getvalue().encode("utf-8")
+
+    ui_download_html_lazy = mo.download(
+        data=get_html_data,
+        filename="plot_map_nf_membership_2025.html",
+        mimetype="text/html",
+        label="Download aktuelle Karte als HTML",
+    )
+
+    return get_html_data, ui_download_html_lazy
+
+
+@app.cell
+def _(get_html_data):
+    #get_html_data().getvalue()[:500]
+    get_html_data()[:500]
+    return
+
+
+@app.cell
+def _(ui_download_html_lazy):
+    ui_download_html_lazy
+    return
+
+
+@app.cell
+def _():
+    download_txt = mo.download(
+        data="Hello, world!".encode("utf-8"),
+        filename="hello.txt",
+        mimetype="text/html",
+    )
+    return (download_txt,)
+
+
+@app.cell
+def _(download_txt):
+    download_txt
+    return
 
 
 if __name__ == "__main__":
