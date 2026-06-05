@@ -20,33 +20,61 @@ with app.setup:
     import base64
     import requests
     import marimo as mo
+
+    from functools import lru_cache
+
+
+@app.cell
+def _():
     import pandas as pd
     import plotly.express as px
     import plotly.graph_objects as go
 
-    from functools import lru_cache
+    return go, pd, px
+
+
+@app.cell
+def _():
     from cryptography.fernet import Fernet, InvalidToken
-    from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
+
+    ENCRYPTION_MODE = None
+    try:
+        from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
+        ENCRYPTION_MODE = "Password"
+    except ModuleNotFoundError:
+        print("Fernet encryption requires the 'cryptography' library primitive kdf, which is not available in the current environment. Please install it to enable data encryption and decryption features.")
+        ENCRYPTION_MODE = "Passkey"
+
+    ENCRYPTION_MODE = "Passkey"
+    return Argon2id, ENCRYPTION_MODE, Fernet, InvalidToken
 
 
-@app.function
-def get_key(password: str, salt: bytes):
-    """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one.
-    You can either provide the salt as bytes or a path to the salt file."""
+@app.cell
+def _(Argon2id, ENCRYPTION_MODE):
+    def get_key(password: str, salt: bytes):
+        """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one.
+        You can either provide the salt as bytes or a path to the salt file."""
 
-    if not isinstance(salt, bytes):
-        raise ValueError("Salt must be provided as bytes in WASM environment.")
+        if not isinstance(salt, bytes):
+            raise ValueError("Salt must be provided as bytes in WASM environment.")
 
-    kdf = Argon2id(
-        salt=salt,
-        length=32,
-        iterations=1,
-        lanes=4,
-        memory_cost=2**21
-    )
-    password_bytestr = password.encode()
-    key = base64.urlsafe_b64encode(kdf.derive(password_bytestr))
-    return key
+        if ENCRYPTION_MODE == "Passkey":
+            # In Passkey mode, we use the password directly as the key. This is less secure but does not require the Argon2id KDF, which is not available in the current environment.
+            key = bytes(password, "utf-8")
+            return key
+
+        kdf = Argon2id(
+            salt=salt,
+            length=32,
+            iterations=1,
+            lanes=4,
+            memory_cost=2**21
+        )
+        password_bytestr = password.encode()
+        key = base64.urlsafe_b64encode(kdf.derive(password_bytestr))
+        return key
+
+    return (get_key,)
 
 
 @app.cell(hide_code=True)
@@ -57,10 +85,13 @@ def _():
     return
 
 
-@app.function
-def get_data_air_traffic() -> pd.DataFrame:
-    df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv")
-    return df
+@app.cell
+def _(pd):
+    def get_data_air_traffic() -> pd.DataFrame:
+        df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv")
+        return df
+
+    return (get_data_air_traffic,)
 
 
 @app.cell
@@ -106,7 +137,7 @@ def _():
 def _(set_age_updated):
     age_groups = ["0-8", "9-14", "15-18", "19-26", "27-45", "46-57", "58-64", "65-75", ">75"]
     ui_checkoboxes_age_groups = {
-        age_group: mo.ui.checkbox(label=age_group.replace(">", "\>"), value=True, on_change=set_age_updated) for age_group in age_groups
+        age_group: mo.ui.checkbox(label=age_group.replace(">", r"\>"), value=True, on_change=set_age_updated) for age_group in age_groups
     }
 
     ui_filter_age_groups = mo.vstack([mo.md("Summiere folgende Altersgruppen"), mo.hstack(ui_checkoboxes_age_groups.values())])
@@ -138,29 +169,32 @@ def download_file(url: str) -> bytes:
     return response.content
 
 
-@app.function
-def download_data(password) -> dict:
-    """Downloads the encrypted data file and the corresponding salt, derives the encryption key using the provided password, and decrypts the data."""
-    salt = download_file(
-        "https://raw.githubusercontent.com/MoritzHauff/python_visualizations/refs/heads/main/src/map_bubble/nf_membership/nf_membership_data.salt"
-    )
-    # print(f"Accessed salt successfully: {salt} type: {type(salt)}")
+@app.cell
+def _(Fernet, InvalidToken, get_key):
+    def download_data(password) -> dict:
+        """Downloads the encrypted data file and the corresponding salt, derives the encryption key using the provided password, and decrypts the data."""
+        salt = download_file(
+            "https://raw.githubusercontent.com/MoritzHauff/python_visualizations/refs/heads/main/src/map_bubble/nf_membership/nf_membership_data.salt"
+        )
+        # print(f"Accessed salt successfully: {salt} type: {type(salt)}")
 
-    file = download_file(
-        "https://raw.githubusercontent.com/MoritzHauff/python_visualizations/refs/heads/main/src/map_bubble/nf_membership/nf_membership_data.enc"
-    )
+        file = download_file(
+            "https://raw.githubusercontent.com/MoritzHauff/python_visualizations/refs/heads/main/src/map_bubble/nf_membership/nf_membership_data.enc"
+        )
 
-    # Only after both downloads were sucessful, we can proceed to get the key and decrypt the data
-    key = get_key(password, salt)
+        # Only after both downloads were sucessful, we can proceed to get the key and decrypt the data
+        key = get_key(password, salt)
 
-    fernet = Fernet(key)
-    try:
-        data_bytes = fernet.decrypt(file)
-    except InvalidToken:
-        raise Exception("Decryption failed. Please check your password and try again.")
-    data_json = json.loads(data_bytes.decode())
+        fernet = Fernet(key)
+        try:
+            data_bytes = fernet.decrypt(file)
+        except InvalidToken:
+            raise Exception("Decryption failed. Please check your password and try again.")
+        data_json = json.loads(data_bytes.decode())
 
-    return data_json
+        return data_json
+
+    return (download_data,)
 
 
 @app.cell
@@ -170,7 +204,7 @@ def _():
 
 
 @app.cell
-def _(COL_GROUP, ui_text_password):
+def _(COL_GROUP, download_data, pd, ui_text_password):
     def prepare_data_nf_membership() -> tuple[bool, pd.DataFrame]:
         try:
             data_dict = download_data(ui_text_password.value)
@@ -253,6 +287,10 @@ def _(
     COL_GROUP,
     COL_SIZE,
     df,
+    get_data_air_traffic,
+    go,
+    pd,
+    px,
     ui_layout_checkbox_cluster,
     ui_layout_color_column,
     ui_layout_marker_size,
@@ -387,7 +425,7 @@ def _():
 
 
 @app.cell
-def _(COL_GROUP, COL_SIZE, df, plot):
+def _(COL_GROUP, COL_SIZE, df, pd, plot):
     df_details = df
     # Get user selection if available
     selection = plot.value
