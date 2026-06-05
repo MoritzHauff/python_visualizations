@@ -1,8 +1,18 @@
 # Publish marimo notebooks to GitHub Pages
 
-https://docs.marimo.io/guides/publishing/github/#publish-to-github-pages
+
+## Prepare notebook for WASM
+
+https://docs.marimo.io/guides/wasm/#packages
+
+When developing notebooks locally that you plan to share as WASM notebooks, create them with
+`marimo edit --sandbox notebook.py`. This inlines your package dependencies into the notebook file,
+ensuring they are seamlessly installed in our WebAssembly environment.
+See [package management](https://docs.marimo.io/guides/editor_features/package_management/) for more details.
 
 ## Export to WASM-powered HTML
+
+https://docs.marimo.io/guides/publishing/github/#publish-to-github-pages
 
 Export your notebook to a self-contained HTML file that runs using [WebAssembly](https://docs.marimo.io/guides/wasm/):
 ```sh

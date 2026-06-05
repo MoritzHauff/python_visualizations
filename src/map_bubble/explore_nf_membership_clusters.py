@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "cryptography==48.0.0",
+#     "marimo",
+#     "pandas==3.0.3",
+#     "plotly==6.8.0",
+#     "requests==2.34.2",
+# ]
+# ///
 import marimo
 
 __generated_with = "0.21.1"
