@@ -29,6 +29,12 @@ def _():
     return
 
 
+@app.function
+def get_data_air_traffic() -> pd.DataFrame:
+    df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv")
+    return df
+
+
 @app.cell
 def _():
     ui_text_password = mo.ui.text(label="Bitte Passwort eingeben:", placeholder="Passwort", kind="password")
@@ -50,22 +56,45 @@ def _():
 
 
 @app.cell
-def _(df, ui_settings, ui_settings_show_raw_df):
+def _(df, ui_filter_age_groups, ui_settings, ui_settings_show_raw_df):
     mo.accordion(
         {
             "Einstellungen": ui_settings,
             "Rohdaten": df if ui_settings_show_raw_df.value else mo.md('Aktiviere "Rohdaten", in den Einstellungen.'),
-            "Filter": mo.md("Hier kommen bald Filter dazu."),
+            "Filter": ui_filter_age_groups,
         },
         multiple=True,
     )
     return
 
 
-@app.function
-def get_data_air_traffic() -> pd.DataFrame:
-    df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv")
-    return df
+@app.cell
+def _():
+    get_age_updated, set_age_updated = mo.state(1)
+    return get_age_updated, set_age_updated
+
+
+@app.cell
+def _(set_age_updated):
+    age_groups = ["0-8", "9-14", "15-18", "19-26", "27-45", "46-57", "58-64", "65-75", ">75"]
+    ui_checkoboxes_age_groups = {
+        age_group: mo.ui.checkbox(label=age_group.replace(">", "\>"), value=True, on_change=set_age_updated) for age_group in age_groups
+    }
+
+    ui_filter_age_groups = mo.vstack([mo.md("Summiere folgende Altersgruppen"), mo.hstack(ui_checkoboxes_age_groups.values())])
+    return age_groups, ui_checkoboxes_age_groups, ui_filter_age_groups
+
+
+@app.cell
+def _(age_groups, ui_checkoboxes_age_groups):
+    def determine_col_size():
+        """If all age filter checkboxes are checked use the total membership column otherwise use the sum of the selected age groups."""
+        if all(ui_checkoboxes_age_groups[age_group].value for age_group in age_groups):
+            return "Mitglieder.gesamt"
+        else:
+            return "Mitglieder.summiert"
+
+    return (determine_col_size,)
 
 
 @app.function
@@ -154,14 +183,45 @@ def _(COL_GROUP, ui_text_password):
 
 @app.cell
 def _(prepare_data_nf_membership):
-    data_success, df = prepare_data_nf_membership()
-    return (df,)
+    data_success, df_raw = prepare_data_nf_membership()
+    return (df_raw,)
 
 
 @app.cell
 def _():
-    # df
+    # df_raw
     return
+
+
+@app.cell
+def _(
+    age_groups,
+    determine_col_size,
+    df_raw,
+    get_age_updated,
+    ui_checkoboxes_age_groups,
+):
+    get_age_updated()  # COL_SIZE should be updated each time one checkbox is updated.
+    COL_SIZE = determine_col_size()
+    df = df_raw
+    if COL_SIZE == "Mitglieder.summiert":
+        enabled_age_groups = [f"Mitglieder Alter.{age_group}" for age_group in age_groups if ui_checkoboxes_age_groups[age_group].value]
+        df[COL_SIZE] = df[enabled_age_groups].sum(axis=1)
+        #    [
+        #        "Mitglieder Alter.0-8",
+        #        "Mitglieder Alter.9-14",
+        #        "Mitglieder Alter.15-18",
+        #        "Mitglieder Alter.19-26",
+        #        "Mitglieder Alter.27-45",
+        #        "Mitglieder Alter.46-57",
+        #        "Mitglieder Alter.58-64",
+        #        "Mitglieder Alter.65-75",
+        #        "Mitglieder Alter.>75",
+        #    ]
+        #].sum(axis=1)
+
+    df
+    return COL_SIZE, df
 
 
 @app.cell(hide_code=True)
@@ -175,6 +235,7 @@ def _():
 @app.cell
 def _(
     COL_GROUP,
+    COL_SIZE,
     df,
     ui_layout_checkbox_cluster,
     ui_layout_color_column,
@@ -189,7 +250,7 @@ def _(
             "lat": False,
             "lon": False,
             "Bezirk": True,
-            "Mitglieder.gesamt": True,
+            COL_SIZE: True,
             "Altersdurchschnitt": ":.1f",  # format to one decimal place"
             "Frauenanteil (Prozent)": ":.1f",  # format to one decimal place"
         }
@@ -199,7 +260,7 @@ def _(
             df,
             lat="lat",  # latitude column
             lon="lon",  # longitude column
-            size="Mitglieder.gesamt",  # column which determines the size of the markers
+            size=COL_SIZE,  # column which determines the size of the markers
             size_max=ui_layout_marker_size.value,  # maximum mark size (defalt 20)
             color=ui_layout_color_column.value,  # column which determines the color of the markers
             hover_name=COL_GROUP,  # column to show in the hover tooltip
@@ -263,13 +324,7 @@ def _():
 
 
 @app.cell
-def _(plot):
-    plot.value
-    return
-
-
-@app.cell
-def _(COL_GROUP, df, plot):
+def _(COL_GROUP, COL_SIZE, df, plot):
     df_details = df
     # Get user selection if available
     selection = plot.value
@@ -283,11 +338,11 @@ def _(COL_GROUP, df, plot):
 
     # reorder columns for interesting columns first then the rest
     df_details = df_details[
-        [COL_GROUP, "Bezirk", "Mitglieder.gesamt", "Altersdurchschnitt", "Frauenanteil (Prozent)"]
+        [COL_GROUP, "Bezirk", COL_SIZE, "Altersdurchschnitt", "Frauenanteil (Prozent)"]
         + [
             col
             for col in df_details.columns
-            if col not in [COL_GROUP, "Bezirk", "Mitglieder.gesamt", "Altersdurchschnitt", "Frauenanteil (Prozent)"]
+            if col not in [COL_GROUP, "Bezirk", COL_SIZE, "Altersdurchschnitt", "Frauenanteil (Prozent)"]
         ]
     ]
 
@@ -348,12 +403,6 @@ def _():
         ui_settings_map_height,
         ui_settings_show_raw_df,
     )
-
-
-@app.cell
-def _(ui_settings):
-    ui_settings
-    return
 
 
 if __name__ == "__main__":
