@@ -147,7 +147,7 @@ def _(COL_GROUP, ui_text_password):
             df_memberships = pd.DataFrame.from_records(data_dict["group_memberships"])
         except Exception as e:
             print(f"**Fehler:** {str(e)}")
-            return False, pd.DataFrame(), True
+            return False, pd.DataFrame()
 
         # validate data
         if len(df_locations) == 0 or len(df_memberships) == 0:
@@ -181,7 +181,7 @@ def _(COL_GROUP, ui_text_password):
 @app.cell
 def _(prepare_data_nf_membership):
     data_success, df_raw = prepare_data_nf_membership()
-    return (df_raw,)
+    return data_success, df_raw
 
 
 @app.cell
@@ -278,18 +278,11 @@ def _(
 
 
 @app.cell
-def _(ui_layout):
-    ui_layout
-    return
-
-
-@app.cell(hide_code=True)
 def _():
-    mo.md(r"""
-    Diese Karte ist interaktiv. Mit der "Pan" Funktion oben rechts über der Karte, kann diese verschoben werden.
-    Mithilfe von "Box Select" und "Lasso" können bestimmte Ortsgruppen ausgewählt werden, um diese genauer zu untersuchen.
+    ui_label_map = mo.md("""
+    Diese Karte ist interaktiv. Mit der "Pan" Funktion oben rechts über der Karte, kann diese verschoben werden. Mithilfe von "Box Select" und "Lasso" können bestimmte Ortsgruppen ausgewählt werden, um diese genauer zu untersuchen.
     """)
-    return
+    return (ui_label_map,)
 
 
 @app.cell
@@ -319,11 +312,31 @@ def _(fig, ui_settings_always_show_mode_bar):
     #     ]
     # 
 
-    #_plotly_options["modeBarButtonsToAdd"] = ["sendDataToCloud"]
-
     plot = mo.ui.plotly(fig, config=_plotly_options)
-    plot
     return (plot,)
+
+
+@app.cell
+def _(data_success):
+    _out = None
+    if not data_success:
+        _out = mo.callout("Zugriff auf Daten verweigert. Bitte überprüfe dein Passwort und lade die Seite zu einem späteren Zeitpunkt neu, um es erneut zu versuchen.", kind="warn")
+    _out
+    return
+
+
+@app.cell
+def _(data_success, plot, ui_label_map, ui_layout):
+    _out = None  # use two different cells to now ancestor exceptions prevent rendering of the warning callout
+    if data_success:
+        _out = mo.vstack([
+            ui_layout,
+            ui_label_map,
+            plot,
+        ])
+
+    _out
+    return
 
 
 @app.cell(hide_code=True)
@@ -419,15 +432,9 @@ def _():
 @app.cell
 def _(fig):
     # HTML download with lazy loading
-    #async def get_html_data():
-    def get_html_data():
-        #await asyncio.sleep(1)
-        #return "<p>Test</p>"
+    async def get_html_data():
         _data = io.StringIO()
-        #_data = io.BytesIO()
         fig.write_html(_data, full_html=True)
-        #return _data
-    
         return _data.getvalue().encode("utf-8")
 
     ui_download_html_lazy = mo.download(
@@ -435,37 +442,20 @@ def _(fig):
         filename="plot_map_nf_membership_2025.html",
         mimetype="text/html",
         label="Download aktuelle Karte als HTML",
+        disabled=True,  # shows 403r Access blocked
     )
-
     return get_html_data, ui_download_html_lazy
 
 
-@app.cell
-def _(get_html_data):
-    #get_html_data().getvalue()[:500]
-    get_html_data()[:500]
+@app.cell(disabled=True)
+async def _(get_html_data):
+    await get_html_data()
     return
 
 
-@app.cell
+@app.cell(disabled=True)
 def _(ui_download_html_lazy):
     ui_download_html_lazy
-    return
-
-
-@app.cell
-def _():
-    download_txt = mo.download(
-        data="Hello, world!".encode("utf-8"),
-        filename="hello.txt",
-        mimetype="text/html",
-    )
-    return (download_txt,)
-
-
-@app.cell
-def _(download_txt):
-    download_txt
     return
 
 
