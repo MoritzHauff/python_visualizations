@@ -8,14 +8,16 @@
 #     "requests==2.34.2",
 # ]
 # ///
+
 import marimo
 
-__generated_with = "0.21.1"
+__generated_with = "0.23.9"
 app = marimo.App(width="medium")
 
 with app.setup:
     import io
     import json
+    import base64
     import requests
     import marimo as mo
     import pandas as pd
@@ -23,9 +25,28 @@ with app.setup:
     import plotly.graph_objects as go
 
     from functools import lru_cache
-    from cryptography.fernet import InvalidToken
+    from cryptography.fernet import Fernet, InvalidToken
+    from cryptography.hazmat.primitives.kdf.argon2 import Argon2id
 
-    from crypto.encryption import get_key, Fernet
+
+@app.function
+def get_key(password: str, salt: bytes):
+    """Convert the password to a Fernet key. If available use the previous salt otherwise create a new one.
+    You can either provide the salt as bytes or a path to the salt file."""
+
+    if not isinstance(salt, bytes):
+        raise ValueError("Salt must be provided as bytes in WASM environment.")
+
+    kdf = Argon2id(
+        salt=salt,
+        length=32,
+        iterations=1,
+        lanes=4,
+        memory_cost=2**21
+    )
+    password_bytestr = password.encode()
+    key = base64.urlsafe_b64encode(kdf.derive(password_bytestr))
+    return key
 
 
 @app.cell(hide_code=True)
@@ -33,6 +54,13 @@ def _():
     mo.md(r"""
     # Naturfreunde Mitgliederzahlen nach Ortsgruppe und Alter
     """)
+    return
+
+
+@app.cell
+def _():
+    import plotly
+    mo.md(f"Plotly version: {plotly.__version__}")
     return
 
 
