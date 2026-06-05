@@ -1,7 +1,9 @@
 """
 Encrypt and decrypt files using the 'cryptography' module and ways to handle key/passwords.
 
-reference: https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
+reference:
+https://cryptography.io/en/latest/fernet/#using-passwords-with-fernet
+https://security.stackexchange.com/questions/17421/how-to-store-salt
 """
 
 import os
