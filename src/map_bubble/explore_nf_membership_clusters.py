@@ -17,21 +17,29 @@ def _():
     return
 
 
-@app.cell
-def _():
-    # https://plotly.com/python/tile-scatter-maps/
-
+@app.function
+def get_data() -> pd.DataFrame:
     df = pd.read_csv(
         "https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv"
     )
-    fig = px.scatter_map(df, lat="lat", lon="long", size="cnt", zoom=3)
-    fig.update_traces(cluster=dict(enabled=True))
+    return df
 
-    #fig.update_layout(
-    #    map=dict(
-    #        style="https://tile.openstreetmap.de/{z}/{x}/{y}.png"
-    #    )
-    #)
+
+@app.cell
+def _():
+    df = get_data()
+
+    # https://plotly.com/python/tile-scatter-maps/
+    fig = px.scatter_map(
+        df,
+        lat="lat",  # latitude column
+        lon="long",  # longitude column
+        size="cnt",  # size of the markers based on the 'cnt' column
+        size_max=100,  # maximum mark size (defalt 20)
+        zoom=3,
+    )
+    # enable clustering of points if they are close together
+    fig.update_traces(cluster=dict(enabled=True))
 
     # update the map layout (underlying tile provider)
     # https://plotly.com/python/tile-map-layers/
